@@ -37,7 +37,7 @@ cargo install --git https://github.com/YourUsername/portscan.git
 ### Basic Usage
 
 ```bash
-portscan --target 127.0.0.1 --port 80
+portscan --target 127.0.0.1 --ports 22,70-90
 ```
 
 ## License
