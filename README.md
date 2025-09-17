@@ -1,6 +1,6 @@
 # PortScan
 
-![Build Status](https://img.shields.io/github/actions/workflow/status/HuRuilizhen/portscab/rust.yml?branch=release)
+![Build Status](https://img.shields.io/github/actions/workflow/status/HuRuilizhen/portscan/rust.yml?branch=release)
 
 A Rust-based port scanning tool designed for both beginners and professionals, offering customizable options from simple TCP scans to more advanced techniques.
 
