@@ -48,6 +48,13 @@ pub struct Args {
 
     #[arg(
         long,
+        default_value = "text",
+        help = "Output format, one of 'text', 'json' or 'csv'"
+    )]
+    format: String,
+
+    #[arg(
+        long,
         help = "Only open ports will be printed line by line (suitable for scripting)"
     )]
     quiet: bool,
@@ -59,7 +66,14 @@ pub struct AddrConfig {
     pub timeout: u64,
 }
 
+pub enum DisplayFormat {
+    Text,
+    Json,
+    Csv,
+}
+
 pub struct DisplayConfig {
+    pub format: DisplayFormat,
     pub quiet: bool,
 }
 
@@ -120,7 +134,20 @@ pub fn parse() -> (Vec<Upshot>, DisplayConfig) {
         }));
     }
 
-    (upshots, DisplayConfig { quiet: args.quiet })
+    let mut format = DisplayFormat::Text;
+    if args.format == "json" {
+        format = DisplayFormat::Json;
+    } else if args.format == "csv" {
+        format = DisplayFormat::Csv;
+    }
+
+    (
+        upshots,
+        DisplayConfig {
+            format: format,
+            quiet: args.quiet,
+        },
+    )
 }
 
 #[cfg(test)]

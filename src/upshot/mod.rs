@@ -3,10 +3,12 @@
 //!
 //! Current support quiet and normal output mode
 
-use crate::cli::DisplayConfig;
+use crate::cli::{DisplayConfig, DisplayFormat};
 use colored::Colorize;
+use serde::Serialize;
 use std::fmt;
 
+#[derive(Debug, Clone, Serialize)]
 pub enum Status {
     OPEN,
     CLOSE,
@@ -22,6 +24,7 @@ impl fmt::Display for Status {
     }
 }
 
+#[derive(Debug, Clone, Serialize)]
 pub struct Upshot {
     pub target: String,
     pub ip: String,
@@ -43,7 +46,13 @@ pub fn upshot_quiet(upshot: Upshot) -> String {
     }
 }
 
-pub fn display_upshots(upshots: Vec<Upshot>, display_config: DisplayConfig) {
+pub fn display_upshot_json(upshots: Vec<Upshot>) {
+    println!("{}", serde_json::to_string(&upshots).unwrap());
+}
+
+pub fn display_upshot_csv(_upshots: Vec<Upshot>) {}
+
+pub fn display_upshot_text(upshots: Vec<Upshot>, display_config: DisplayConfig) {
     for upshot in upshots {
         match display_config.quiet {
             true => print!("{}", upshot_quiet(upshot)),
@@ -51,5 +60,13 @@ pub fn display_upshots(upshots: Vec<Upshot>, display_config: DisplayConfig) {
                 print!("{}", upshot_normal(upshot));
             }
         }
+    }
+}
+
+pub fn display_upshots(upshots: Vec<Upshot>, display_config: DisplayConfig) {
+    match display_config.format {
+        DisplayFormat::Text => display_upshot_text(upshots, display_config),
+        DisplayFormat::Json => display_upshot_json(upshots),
+        DisplayFormat::Csv => display_upshot_csv(upshots),
     }
 }
