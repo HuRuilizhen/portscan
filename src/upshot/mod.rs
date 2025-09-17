@@ -7,6 +7,7 @@ use crate::cli::{DisplayConfig, DisplayFormat};
 use colored::Colorize;
 use serde::Serialize;
 use std::fmt;
+use std::io;
 
 #[derive(Debug, Clone, Serialize)]
 pub enum Status {
@@ -50,7 +51,15 @@ pub fn display_upshot_json(upshots: Vec<Upshot>) {
     println!("{}", serde_json::to_string(&upshots).unwrap());
 }
 
-pub fn display_upshot_csv(_upshots: Vec<Upshot>) {}
+pub fn display_upshot_csv(upshots: Vec<Upshot>) {
+    let mut wtr = csv::Writer::from_writer(io::stdout());
+
+    for upshot in upshots {
+        wtr.serialize(upshot).unwrap();
+    }
+
+    wtr.flush().unwrap();
+}
 
 pub fn display_upshot_text(upshots: Vec<Upshot>, display_config: DisplayConfig) {
     for upshot in upshots {

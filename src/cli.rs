@@ -139,6 +139,9 @@ pub fn parse() -> (Vec<Upshot>, DisplayConfig) {
         format = DisplayFormat::Json;
     } else if args.format == "csv" {
         format = DisplayFormat::Csv;
+    } else if args.format != "text" {
+        eprintln!("{}: {}", "Error".red().bold(), "Invalid format");
+        std::process::exit(1);
     }
 
     (
