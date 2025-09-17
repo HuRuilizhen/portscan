@@ -6,15 +6,44 @@ use colored::Colorize;
 
 #[derive(Parser)]
 #[command(name = "portscan")]
-#[command(about = "A simple port scanner", long_about = None)]
+#[command(
+    about = "A simple yet powerful TCP port scanner that supports domains and IP addresses",
+    version = env!("CARGO_PKG_VERSION"),
+    author = "HuRuilizhen",
+    help_template = r#"
+{about}
+
+Version: {version}
+Author: {author}
+
+Usage: {usage}
+
+{all-args}
+"#
+)]
 pub struct Args {
-    #[arg(short, long, required = true)]
+    #[arg(
+        short,
+        long,
+        required = true,
+        help = "Target host (IP or domain), e.g. 127.0.0.1 or google.com"
+    )]
     target: String,
 
-    #[arg(short, long, value_delimiter = ',', default_value = "80")]
+    #[arg(
+        short,
+        long,
+        value_delimiter = ',',
+        default_value = "22",
+        help = "Ports to scan. Comma-separated or ranges, e.g. 80,443,8080-8090"
+    )]
     ports: Vec<String>,
 
-    #[arg(long, default_value = "500")]
+    #[arg(
+        long,
+        default_value = "500",
+        help = "Connection timeout in milliseconds."
+    )]
     timeout: u64,
 }
 
