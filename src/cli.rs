@@ -12,6 +12,9 @@ pub struct Args {
 
     #[arg(short, long, value_delimiter = ',', default_value = "80")]
     ports: Vec<String>,
+
+    #[arg(long, default_value = "500")]
+    timeout: u64,
 }
 
 fn expand_ports_spec(specs: &Vec<String>) -> Result<Vec<u16>, String> {
@@ -50,6 +53,6 @@ pub fn parse() {
     let ports = expand_ports_spec(&args.ports).unwrap();
     for port in ports {
         let target = format!("{}:{}", args.target, port);
-        scanner::scan(&target);
+        scanner::scan(&target, args.timeout);
     }
 }
