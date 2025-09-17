@@ -2,12 +2,13 @@
 
 use crate::scanner;
 use clap::Parser;
+use colored::Colorize;
 
 #[derive(Parser)]
 #[command(name = "portscan")]
 #[command(about = "A simple port scanner", long_about = None)]
 pub struct Args {
-    #[arg(short, long, default_value = "127.0.0.1")]
+    #[arg(short, long, required = true)]
     target: String,
 
     #[arg(short, long, value_delimiter = ',', default_value = "80")]
@@ -31,8 +32,14 @@ fn expand_ports_spec(specs: &Vec<String>) -> Result<Vec<u16>, String> {
 
             let from = from.parse::<u16>().unwrap();
             let to = to.parse::<u16>().unwrap();
+            if from == 0 || to == 0 {
+                return Err(format!(
+                    "Invalid port range {}-{}, zero is not allowed",
+                    from, to
+                ));
+            }
             if from > to {
-                return Err("Invalid port range".to_string());
+                return Err(format!("Invalid port range {}-{}, from > to", from, to));
             }
             for i in from..=to {
                 ports.push(i);
@@ -50,9 +57,16 @@ fn expand_ports_spec(specs: &Vec<String>) -> Result<Vec<u16>, String> {
 
 pub fn parse() {
     let args = Args::parse();
-    let ports = expand_ports_spec(&args.ports).unwrap();
+
+    let ports = match expand_ports_spec(&args.ports) {
+        Ok(ports) => ports,
+        Err(err) => {
+            eprintln!("{}: {}", "Error".red().bold(), err);
+            std::process::exit(1);
+        }
+    };
+
     for port in ports {
-        let target = format!("{}:{}", args.target, port);
-        scanner::scan(&target, args.timeout);
+        scanner::scan(&args.target, port, args.timeout);
     }
 }
