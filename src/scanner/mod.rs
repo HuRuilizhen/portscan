@@ -3,15 +3,16 @@
 //!
 //! Currently supports TCP connect scan.
 
+use crate::cli::AddrConfig;
 use crate::upshot::{Status, Upshot};
 use colored::Colorize;
 use std::net::{TcpStream, ToSocketAddrs};
 use std::time::Duration;
 
-pub fn scan(target: &str, port: u16, timeout: u64) -> Vec<Upshot> {
+pub fn scan(addr_config: AddrConfig) -> Vec<Upshot> {
     let mut upshots: Vec<Upshot> = Vec::new();
 
-    let addr = format!("{}:{}", target, port);
+    let addr = format!("{}:{}", addr_config.target, addr_config.port);
 
     let addrs = match addr.to_socket_addrs() {
         Ok(addrs) => addrs,
@@ -29,7 +30,7 @@ pub fn scan(target: &str, port: u16, timeout: u64) -> Vec<Upshot> {
     for addr in addrs {
         let status: Status;
 
-        match TcpStream::connect_timeout(&addr, Duration::from_millis(timeout)) {
+        match TcpStream::connect_timeout(&addr, Duration::from_millis(addr_config.timeout)) {
             Ok(_) => {
                 status = Status::OPEN;
             }
@@ -39,9 +40,9 @@ pub fn scan(target: &str, port: u16, timeout: u64) -> Vec<Upshot> {
         }
 
         upshots.push(Upshot {
-            target: target.to_string(),
+            target: addr_config.target.to_string(),
             ip: addr.ip().to_string(),
-            port: port,
+            port: addr_config.port,
             status: status,
         });
     }

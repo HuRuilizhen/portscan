@@ -3,6 +3,7 @@
 //!
 //! Current support quiet and normal output mode
 
+use crate::cli::DisplayConfig;
 use colored::Colorize;
 use std::fmt;
 
@@ -30,13 +31,25 @@ pub struct Upshot {
 
 pub fn upshot_normal(upshot: Upshot) -> String {
     format!(
-        "{}\t{}:{}\t{}",
+        "{}\t{}:{}\t{}\n",
         upshot.target, upshot.ip, upshot.port, upshot.status,
     )
 }
 
-pub fn display_upshots(upshots: Vec<Upshot>) {
+pub fn upshot_quiet(upshot: Upshot) -> String {
+    match upshot.status {
+        Status::OPEN => return format!("{}\n", upshot.port),
+        Status::CLOSE => return "".to_string(),
+    }
+}
+
+pub fn display_upshots(upshots: Vec<Upshot>, display_config: DisplayConfig) {
     for upshot in upshots {
-        println!("{}", upshot_normal(upshot));
+        match display_config.quiet {
+            true => print!("{}", upshot_quiet(upshot)),
+            false => {
+                print!("{}", upshot_normal(upshot));
+            }
+        }
     }
 }

@@ -45,6 +45,22 @@ pub struct Args {
         help = "Connection timeout in milliseconds."
     )]
     timeout: u64,
+
+    #[arg(
+        long,
+        help = "Only open ports will be printed line by line (suitable for scripting)"
+    )]
+    quiet: bool,
+}
+
+pub struct AddrConfig {
+    pub target: String,
+    pub port: u16,
+    pub timeout: u64,
+}
+
+pub struct DisplayConfig {
+    pub quiet: bool,
 }
 
 fn expand_ports_spec(specs: &Vec<String>) -> Result<Vec<u16>, String> {
@@ -84,7 +100,7 @@ fn expand_ports_spec(specs: &Vec<String>) -> Result<Vec<u16>, String> {
     Ok(ports)
 }
 
-pub fn parse() -> Vec<Upshot> {
+pub fn parse() -> (Vec<Upshot>, DisplayConfig) {
     let args = Args::parse();
     let mut upshots: Vec<Upshot> = Vec::new();
 
@@ -97,10 +113,14 @@ pub fn parse() -> Vec<Upshot> {
     };
 
     for port in ports {
-        upshots.append(&mut scanner::scan(&args.target, port, args.timeout));
+        upshots.append(&mut scanner::scan(AddrConfig {
+            target: args.target.clone(),
+            port,
+            timeout: args.timeout,
+        }));
     }
 
-    upshots
+    (upshots, DisplayConfig { quiet: args.quiet })
 }
 
 #[cfg(test)]
