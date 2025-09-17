@@ -31,13 +31,13 @@ A Rust-based port scanning tool designed for both beginners and professionals, o
 ### Installation
 
 ```bash
-cargo install --git https://github.com/YourUsername/portscan.git
+cargo install --git https://github.com/HuRuilizhen/portscan.git
 ```
 
 ### Basic Usage
 
 ```bash
-portscan --target 127.0.0.1 --ports 22,70-90
+portscan --target 127.0.0.1 --ports 22,70-90 --timeout 500
 ```
 
 ## License
