@@ -99,3 +99,21 @@ pub fn parse() {
         scanner::scan(&args.target, port, args.timeout);
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_single_port() {
+        assert_eq!(expand_ports_spec(&vec!["80".to_string()]), Ok(vec![80]));
+    }
+
+    #[test]
+    fn test_range_ports() {
+        assert_eq!(
+            expand_ports_spec(&vec!["1-100".to_string()]),
+            Ok((1..=100).collect())
+        );
+    }
+}

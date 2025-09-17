@@ -14,12 +14,12 @@ pub fn scan(target: &str, port: u16, timeout: u64) {
         Ok(addrs) => addrs,
         Err(err) => {
             eprintln!(
-                "{}: failed to resolve address '{}': {}",
+                "{}: failed to resolve address '{}' - {}",
                 "Error".red().bold(),
                 addr,
-                err
+                err.to_string().split(':').next().unwrap(),
             );
-            return;
+            std::process::exit(1);
         }
     };
 
