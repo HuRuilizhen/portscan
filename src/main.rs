@@ -1,6 +1,7 @@
 mod cli;
 mod scanner;
+mod upshot;
 
 fn main() {
-    cli::parse();
+    upshot::display_upshots(cli::parse());
 }

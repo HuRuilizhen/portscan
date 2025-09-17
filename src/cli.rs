@@ -1,6 +1,6 @@
 // src/cli.rs
 
-use crate::scanner;
+use crate::{scanner, upshot::Upshot};
 use clap::Parser;
 use colored::Colorize;
 
@@ -84,8 +84,9 @@ fn expand_ports_spec(specs: &Vec<String>) -> Result<Vec<u16>, String> {
     Ok(ports)
 }
 
-pub fn parse() {
+pub fn parse() -> Vec<Upshot> {
     let args = Args::parse();
+    let mut upshots: Vec<Upshot> = Vec::new();
 
     let ports = match expand_ports_spec(&args.ports) {
         Ok(ports) => ports,
@@ -96,8 +97,10 @@ pub fn parse() {
     };
 
     for port in ports {
-        scanner::scan(&args.target, port, args.timeout);
+        upshots.append(&mut scanner::scan(&args.target, port, args.timeout));
     }
+
+    upshots
 }
 
 #[cfg(test)]
