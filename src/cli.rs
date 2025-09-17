@@ -2,18 +2,48 @@
 
 use crate::scanner;
 use clap::Parser;
+use colored::Colorize;
 
 #[derive(Parser)]
 #[command(name = "portscan")]
-#[command(about = "A simple port scanner", long_about = None)]
+#[command(
+    about = "A simple yet powerful TCP port scanner that supports domains and IP addresses",
+    version = env!("CARGO_PKG_VERSION"),
+    author = "HuRuilizhen",
+    help_template = r#"
+{about}
+
+Version: {version}
+Author: {author}
+
+Usage: {usage}
+
+{all-args}
+"#
+)]
 pub struct Args {
-    #[arg(short, long, default_value = "127.0.0.1")]
+    #[arg(
+        short,
+        long,
+        required = true,
+        help = "Target host (IP or domain), e.g. 127.0.0.1 or google.com"
+    )]
     target: String,
 
-    #[arg(short, long, value_delimiter = ',', default_value = "80")]
+    #[arg(
+        short,
+        long,
+        value_delimiter = ',',
+        default_value = "22",
+        help = "Ports to scan. Comma-separated or ranges, e.g. 80,443,8080-8090"
+    )]
     ports: Vec<String>,
 
-    #[arg(long, default_value = "500")]
+    #[arg(
+        long,
+        default_value = "500",
+        help = "Connection timeout in milliseconds."
+    )]
     timeout: u64,
 }
 
@@ -31,8 +61,14 @@ fn expand_ports_spec(specs: &Vec<String>) -> Result<Vec<u16>, String> {
 
             let from = from.parse::<u16>().unwrap();
             let to = to.parse::<u16>().unwrap();
+            if from == 0 || to == 0 {
+                return Err(format!(
+                    "Invalid port range {}-{}, zero is not allowed",
+                    from, to
+                ));
+            }
             if from > to {
-                return Err("Invalid port range".to_string());
+                return Err(format!("Invalid port range {}-{}, from > to", from, to));
             }
             for i in from..=to {
                 ports.push(i);
@@ -50,9 +86,16 @@ fn expand_ports_spec(specs: &Vec<String>) -> Result<Vec<u16>, String> {
 
 pub fn parse() {
     let args = Args::parse();
-    let ports = expand_ports_spec(&args.ports).unwrap();
+
+    let ports = match expand_ports_spec(&args.ports) {
+        Ok(ports) => ports,
+        Err(err) => {
+            eprintln!("{}: {}", "Error".red().bold(), err);
+            std::process::exit(1);
+        }
+    };
+
     for port in ports {
-        let target = format!("{}:{}", args.target, port);
-        scanner::scan(&target, args.timeout);
+        scanner::scan(&args.target, port, args.timeout);
     }
 }

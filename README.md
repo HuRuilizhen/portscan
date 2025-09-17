@@ -37,8 +37,10 @@ cargo install --git https://github.com/HuRuilizhen/portscan.git
 ### Basic Usage
 
 ```bash
-portscan --target 127.0.0.1 --ports 22,70-90 --timeout 500
+portscan --target github.com --ports 1-100,3000 --timeout 500
 ```
+
+To get more information, please run `portscan --help`.
 
 ## License
 
