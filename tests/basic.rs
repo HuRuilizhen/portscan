@@ -24,3 +24,21 @@ fn test_scan_invalid_ip() {
         .unwrap();
     assert!(!output.status.success());
 }
+
+#[test]
+fn test_display_invalid_format() {
+    let output = std::process::Command::new("cargo")
+        .args([
+            "run",
+            "--",
+            "--target",
+            "localhost",
+            "--ports",
+            "80",
+            "--format",
+            "invalid",
+        ])
+        .output()
+        .unwrap();
+    assert!(!output.status.success());
+}

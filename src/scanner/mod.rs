@@ -3,12 +3,16 @@
 //!
 //! Currently supports TCP connect scan.
 
+use crate::cli::AddrConfig;
+use crate::upshot::{Status, Upshot};
 use colored::Colorize;
 use std::net::{TcpStream, ToSocketAddrs};
 use std::time::Duration;
 
-pub fn scan(target: &str, port: u16, timeout: u64) {
-    let addr = format!("{}:{}", target, port);
+pub fn scan(addr_config: AddrConfig) -> Vec<Upshot> {
+    let mut upshots: Vec<Upshot> = Vec::new();
+
+    let addr = format!("{}:{}", addr_config.target, addr_config.port);
 
     let addrs = match addr.to_socket_addrs() {
         Ok(addrs) => addrs,
@@ -24,27 +28,24 @@ pub fn scan(target: &str, port: u16, timeout: u64) {
     };
 
     for addr in addrs {
-        match TcpStream::connect_timeout(&addr, Duration::from_millis(timeout)) {
+        let status: Status;
+
+        match TcpStream::connect_timeout(&addr, Duration::from_millis(addr_config.timeout)) {
             Ok(_) => {
-                println!(
-                    "{}:{}\t{}\t(via {})",
-                    &target,
-                    port,
-                    "open".green().bold(),
-                    addr.ip()
-                );
-                return;
+                status = Status::OPEN;
             }
             Err(_) => {
-                println!(
-                    "{}:{}\t{}\t(via {})",
-                    &target,
-                    port,
-                    "closed".red().dimmed(),
-                    addr.ip()
-                );
-                continue;
+                status = Status::CLOSE;
             }
         }
+
+        upshots.push(Upshot {
+            target: addr_config.target.to_string(),
+            ip: addr.ip().to_string(),
+            port: addr_config.port,
+            status: status,
+        });
     }
+
+    upshots
 }

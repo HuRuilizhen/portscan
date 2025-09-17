@@ -1,6 +1,6 @@
 // src/cli.rs
 
-use crate::scanner;
+use crate::{scanner, upshot::Upshot};
 use clap::Parser;
 use colored::Colorize;
 
@@ -45,6 +45,36 @@ pub struct Args {
         help = "Connection timeout in milliseconds."
     )]
     timeout: u64,
+
+    #[arg(
+        long,
+        default_value = "text",
+        help = "Output format, one of 'text', 'json' or 'csv'"
+    )]
+    format: String,
+
+    #[arg(
+        long,
+        help = "Only open ports will be printed line by line (suitable for scripting)"
+    )]
+    quiet: bool,
+}
+
+pub struct AddrConfig {
+    pub target: String,
+    pub port: u16,
+    pub timeout: u64,
+}
+
+pub enum DisplayFormat {
+    Text,
+    Json,
+    Csv,
+}
+
+pub struct DisplayConfig {
+    pub format: DisplayFormat,
+    pub quiet: bool,
 }
 
 fn expand_ports_spec(specs: &Vec<String>) -> Result<Vec<u16>, String> {
@@ -84,8 +114,9 @@ fn expand_ports_spec(specs: &Vec<String>) -> Result<Vec<u16>, String> {
     Ok(ports)
 }
 
-pub fn parse() {
+pub fn parse() -> (Vec<Upshot>, DisplayConfig) {
     let args = Args::parse();
+    let mut upshots: Vec<Upshot> = Vec::new();
 
     let ports = match expand_ports_spec(&args.ports) {
         Ok(ports) => ports,
@@ -96,8 +127,30 @@ pub fn parse() {
     };
 
     for port in ports {
-        scanner::scan(&args.target, port, args.timeout);
+        upshots.append(&mut scanner::scan(AddrConfig {
+            target: args.target.clone(),
+            port,
+            timeout: args.timeout,
+        }));
     }
+
+    let mut format = DisplayFormat::Text;
+    if args.format == "json" {
+        format = DisplayFormat::Json;
+    } else if args.format == "csv" {
+        format = DisplayFormat::Csv;
+    } else if args.format != "text" {
+        eprintln!("{}: {}", "Error".red().bold(), "Invalid format");
+        std::process::exit(1);
+    }
+
+    (
+        upshots,
+        DisplayConfig {
+            format: format,
+            quiet: args.quiet,
+        },
+    )
 }
 
 #[cfg(test)]
