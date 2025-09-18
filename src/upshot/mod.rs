@@ -30,7 +30,7 @@ static SERVICE_MAP: phf::Map<u16, &'static str> = phf_map! {
 };
 
 fn parse_service(port: u16) -> String {
-    SERVICE_MAP.get(&port).unwrap_or(&&"UNK").to_string()
+    SERVICE_MAP.get(&port).unwrap_or(&"UNK").to_string()
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -42,8 +42,8 @@ pub enum Status {
 impl fmt::Display for Status {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let s = match self {
-            Status::OPEN => "OPEN".green().bold().to_string(),
-            Status::CLOSE => "CLOSE".red().bold().to_string(),
+            Status::OPEN => "OPEN".green().bold(),
+            Status::CLOSE => "CLOSE".red().bold(),
         };
         write!(f, "{}", s)
     }
@@ -79,8 +79,8 @@ pub fn upshot_normal(upshot: Upshot) -> String {
 
 pub fn upshot_quiet(upshot: Upshot) -> String {
     match upshot.status {
-        Status::OPEN => return format!("{}\n", upshot.port),
-        Status::CLOSE => return "".to_string(),
+        Status::OPEN => format!("{}\n", upshot.port),
+        Status::CLOSE => String::new(),
     }
 }
 
