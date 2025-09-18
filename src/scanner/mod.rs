@@ -39,12 +39,12 @@ pub fn scan(addr_config: AddrConfig) -> Vec<Upshot> {
             }
         }
 
-        upshots.push(Upshot {
-            target: addr_config.target.to_string(),
-            ip: addr.ip().to_string(),
-            port: addr_config.port,
-            status: status,
-        });
+        upshots.push(Upshot::new(
+            addr_config.target.to_string(),
+            addr.ip().to_string(),
+            addr_config.port,
+            status,
+        ));
     }
 
     upshots
