@@ -6,8 +6,21 @@
 use crate::cli::AddrConfig;
 use crate::upshot::{Status, Upshot};
 use colored::Colorize;
+use pinger::{PingOptions, PingResult, ping};
 use std::net::{TcpStream, ToSocketAddrs};
 use std::time::Duration;
+
+pub fn ping_target(target: &String, timeout: u64) -> bool {
+    let options = PingOptions::new(target, Duration::from_millis(timeout), None);
+    let stream = ping(options).expect(&format!("{}: {}", "Error".red().bold(), "pinging"));
+    for message in stream {
+        match message {
+            PingResult::Pong(_, _) => return true,
+            _ => {}
+        }
+    }
+    false
+}
 
 pub fn scan(addr_config: AddrConfig) -> Vec<Upshot> {
     let mut upshots: Vec<Upshot> = Vec::new();

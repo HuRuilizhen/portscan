@@ -58,6 +58,9 @@ pub struct Args {
         help = "Only open ports will be printed line by line (suitable for scripting)"
     )]
     quiet: bool,
+
+    #[arg(long, help = "Try ping target host before starting port scan")]
+    ping: bool,
 }
 
 pub struct AddrConfig {
@@ -125,6 +128,15 @@ pub fn parse() -> (Vec<Upshot>, DisplayConfig) {
             std::process::exit(1);
         }
     };
+
+    if args.ping && !scanner::ping_target(&args.target, args.timeout) {
+        eprintln!(
+            "{}: failed to ping target {}",
+            "Error".red().bold(),
+            &args.target,
+        );
+        std::process::exit(0);
+    }
 
     for port in ports {
         upshots.append(&mut scanner::scan(AddrConfig {
