@@ -8,7 +8,9 @@ use crate::upshot::{Status, Upshot};
 use colored::Colorize;
 use pinger::{PingOptions, PingResult, ping};
 use std::net::{TcpStream, ToSocketAddrs};
+use std::sync::Arc;
 use std::time::Duration;
+use tokio::sync::Semaphore;
 
 pub fn ping_target(target: &String, timeout: u64) -> bool {
     let options = PingOptions::new(target, Duration::from_millis(timeout), None);
@@ -22,7 +24,11 @@ pub fn ping_target(target: &String, timeout: u64) -> bool {
     false
 }
 
-pub fn scan_port(scan_config: ScanConfig) -> Vec<Upshot> {
+type ConcurrencyLimit = Arc<Semaphore>;
+
+pub async fn scan_port(scan_config: ScanConfig, limit: ConcurrencyLimit) -> Vec<Upshot> {
+    let permit = limit.acquire().await.unwrap();
+
     let mut upshots: Vec<Upshot> = Vec::new();
 
     let addr = format!("{}:{}", scan_config.target, scan_config.port);
@@ -60,18 +66,38 @@ pub fn scan_port(scan_config: ScanConfig) -> Vec<Upshot> {
         ));
     }
 
+    drop(permit);
+
     upshots
 }
 
-pub fn scan_ports(addr_config: AddrConfig) -> Vec<Upshot> {
-    let mut upshots: Vec<Upshot> = Vec::new();
+pub async fn scan_ports(addr_config: AddrConfig) -> Vec<Upshot> {
+    let limit = Arc::new(Semaphore::new(addr_config.concurrency.into()));
+
+    let mut handles = Vec::new();
 
     for port in addr_config.ports {
-        upshots.append(&mut scan_port(ScanConfig {
-            target: addr_config.target.clone(),
-            port: port,
-            timeout: addr_config.timeout,
-        }));
+        let limit = limit.clone();
+        let target = addr_config.target.clone();
+
+        let handle = tokio::spawn(async move {
+            scan_port(
+                ScanConfig {
+                    target: target,
+                    port: port,
+                    timeout: addr_config.timeout,
+                },
+                limit,
+            )
+            .await
+        });
+        handles.push(handle);
+    }
+
+    let mut upshots: Vec<Upshot> = Vec::new();
+
+    for handle in handles {
+        upshots.append(&mut handle.await.unwrap());
     }
 
     upshots

@@ -109,7 +109,7 @@ fn expand_ports_spec(specs: &Vec<String>) -> Result<Vec<u16>, String> {
     Ok(ports)
 }
 
-pub fn parse() -> (Vec<Upshot>, DisplayConfig) {
+pub async fn parse() -> (Vec<Upshot>, DisplayConfig) {
     let args = Args::parse();
 
     let ports = match expand_ports_spec(&args.ports) {
@@ -134,7 +134,8 @@ pub fn parse() -> (Vec<Upshot>, DisplayConfig) {
         ports: ports,
         timeout: args.timeout,
         concurrency: args.concurrency,
-    });
+    })
+    .await;
 
     let mut format = DisplayFormat::Text;
     if args.format == "json" {
