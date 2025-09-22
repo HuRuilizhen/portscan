@@ -3,7 +3,7 @@
 //!
 //! Currently supports TCP connect scan.
 
-use crate::cli::AddrConfig;
+use crate::config::{AddrConfig, ScanConfig};
 use crate::upshot::{Status, Upshot};
 use colored::Colorize;
 use pinger::{PingOptions, PingResult, ping};
@@ -22,10 +22,10 @@ pub fn ping_target(target: &String, timeout: u64) -> bool {
     false
 }
 
-pub fn scan(addr_config: AddrConfig) -> Vec<Upshot> {
+pub fn scan_port(scan_config: ScanConfig) -> Vec<Upshot> {
     let mut upshots: Vec<Upshot> = Vec::new();
 
-    let addr = format!("{}:{}", addr_config.target, addr_config.port);
+    let addr = format!("{}:{}", scan_config.target, scan_config.port);
 
     let addrs = match addr.to_socket_addrs() {
         Ok(addrs) => addrs,
@@ -43,7 +43,7 @@ pub fn scan(addr_config: AddrConfig) -> Vec<Upshot> {
     for addr in addrs {
         let status: Status;
 
-        match TcpStream::connect_timeout(&addr, Duration::from_millis(addr_config.timeout)) {
+        match TcpStream::connect_timeout(&addr, Duration::from_millis(scan_config.timeout)) {
             Ok(_) => {
                 status = Status::OPEN;
             }
@@ -53,11 +53,25 @@ pub fn scan(addr_config: AddrConfig) -> Vec<Upshot> {
         }
 
         upshots.push(Upshot::new(
-            addr_config.target.to_string(),
+            scan_config.target.to_string(),
             addr.ip().to_string(),
-            addr_config.port,
+            scan_config.port,
             status,
         ));
+    }
+
+    upshots
+}
+
+pub fn scan_ports(addr_config: AddrConfig) -> Vec<Upshot> {
+    let mut upshots: Vec<Upshot> = Vec::new();
+
+    for port in addr_config.ports {
+        upshots.append(&mut scan_port(ScanConfig {
+            target: addr_config.target.clone(),
+            port: port,
+            timeout: addr_config.timeout,
+        }));
     }
 
     upshots

@@ -1,5 +1,6 @@
 // src/cli.rs
 
+use crate::config::{AddrConfig, DisplayConfig, DisplayFormat};
 use crate::{scanner, upshot::Upshot};
 use clap::Parser;
 use colored::Colorize;
@@ -47,6 +48,14 @@ pub struct Args {
     timeout: u64,
 
     #[arg(
+        short,
+        long,
+        default_value = "100",
+        help = "Concurrency of port scanning"
+    )]
+    concurrency: u16,
+
+    #[arg(
         long,
         default_value = "text",
         help = "Output format, one of 'text', 'json' or 'csv'"
@@ -61,23 +70,6 @@ pub struct Args {
 
     #[arg(long, help = "Try ping target host before starting port scan")]
     ping: bool,
-}
-
-pub struct AddrConfig {
-    pub target: String,
-    pub port: u16,
-    pub timeout: u64,
-}
-
-pub enum DisplayFormat {
-    Text,
-    Json,
-    Csv,
-}
-
-pub struct DisplayConfig {
-    pub format: DisplayFormat,
-    pub quiet: bool,
 }
 
 fn expand_ports_spec(specs: &Vec<String>) -> Result<Vec<u16>, String> {
@@ -119,7 +111,6 @@ fn expand_ports_spec(specs: &Vec<String>) -> Result<Vec<u16>, String> {
 
 pub fn parse() -> (Vec<Upshot>, DisplayConfig) {
     let args = Args::parse();
-    let mut upshots: Vec<Upshot> = Vec::new();
 
     let ports = match expand_ports_spec(&args.ports) {
         Ok(ports) => ports,
@@ -138,13 +129,12 @@ pub fn parse() -> (Vec<Upshot>, DisplayConfig) {
         std::process::exit(0);
     }
 
-    for port in ports {
-        upshots.append(&mut scanner::scan(AddrConfig {
-            target: args.target.clone(),
-            port,
-            timeout: args.timeout,
-        }));
-    }
+    let upshots = scanner::scan_ports(AddrConfig {
+        target: args.target.clone(),
+        ports: ports,
+        timeout: args.timeout,
+        concurrency: args.concurrency,
+    });
 
     let mut format = DisplayFormat::Text;
     if args.format == "json" {

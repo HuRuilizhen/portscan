@@ -3,7 +3,7 @@
 //!
 //! Current support quiet and normal output mode
 
-use crate::cli::{DisplayConfig, DisplayFormat};
+use crate::config::{DisplayConfig, DisplayFormat};
 use colored::Colorize;
 use phf::phf_map;
 use serde::Serialize;
