@@ -1,6 +1,9 @@
+use crate::cli::ScanMode;
+
 pub struct AddrConfig {
     pub target: String,
     pub ports: Vec<u16>,
+    pub mode: ScanMode,
     pub timeout: u64,
     pub concurrency: u16,
 }
@@ -8,6 +11,7 @@ pub struct AddrConfig {
 pub struct ScanConfig {
     pub target: String,
     pub port: u16,
+    pub mode: ScanMode,
     pub timeout: u64,
 }
 
