@@ -2,6 +2,13 @@
 name = "portscan"
 version = "0.2.0"
 edition = "2024"
+authors = ["HuRuilizhen <huruilizhen@gmail.com>"]
+description = "A simple yet powerful TCP port scanner that supports domains and IP addresses"
+license = "MIT"
+repository = "https://github.com/HuRuilizhen/portscan"
+readme = "README.md"
+keywords = ["cli", "port", "scanner", "tcp", "network"]
+categories = ["command-line-utilities", "network-programming"]
 
 [dependencies]
 clap = { version = "4.4", features = ["derive"] }

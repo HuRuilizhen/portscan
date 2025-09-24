@@ -16,13 +16,12 @@ pub enum ScanMode {
 }
 
 #[derive(Parser)]
-#[command(name = "portscan")]
 #[command(
-    about = "A simple yet powerful TCP port scanner that supports domains and IP addresses",
-    version = env!("CARGO_PKG_VERSION"),
-    author = "HuRuilizhen",
-    help_template = r#"
-{about}
+    name = env!("CARGO_PKG_NAME"),
+    author,
+    version,
+    about,
+    help_template = r#"{about}
 
 Version: {version}
 Author: {author}
