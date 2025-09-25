@@ -12,6 +12,8 @@ use std::sync::Arc;
 use std::time::Duration;
 use tokio::sync::Semaphore;
 
+mod syn;
+
 pub fn ping_target(target: &String, timeout: u64) -> bool {
     let options = PingOptions::new(target, Duration::from_millis(timeout), None);
     let stream = ping(options).expect(&format!("{}: {}", "Error".red().bold(), "pinging"));
@@ -31,7 +33,7 @@ fn connect_target(addr: SocketAddr, timeout: u64) -> Status {
     }
 }
 
-fn syn_target(addr: SocketAddr, timeout: u64) -> Status {
+fn syn_target(_addr: SocketAddr, _timeout: u64) -> Status {
     todo!()
 }
 
@@ -65,7 +67,18 @@ pub async fn scan_port(scan_config: ScanConfig, limit: ConcurrencyLimit) -> Vec<
                 status = connect_target(addr, scan_config.timeout);
             }
             crate::cli::ScanMode::Syn => {
-                status = syn_target(addr, scan_config.timeout);
+                #[cfg(target_family = "unix")]
+                {
+                    status = syn_target(addr, scan_config.timeout);
+                }
+                #[cfg(not(target_family = "unix"))]
+                {
+                    eprintln!(
+                        "{}: unsupported scan mode on this platform",
+                        "Error".red().bold()
+                    );
+                    status = connect_target(addr, scan_config.timeout);
+                }
             }
         }
 
