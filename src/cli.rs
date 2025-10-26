@@ -3,16 +3,25 @@
 use crate::config::{AddrConfig, DisplayConfig, DisplayFormat};
 use crate::{scanner, upshot::Upshot};
 use clap::Parser;
+use clap::ValueEnum;
 use colored::Colorize;
 
+#[derive(ValueEnum, Clone, Copy)]
+pub enum ScanMode {
+    // TCP Connect Scan, full handshake
+    Connect,
+
+    // TCP SYN Scan, half-open, requires raw socket
+    Syn,
+}
+
 #[derive(Parser)]
-#[command(name = "portscan")]
 #[command(
-    about = "A simple yet powerful TCP port scanner that supports domains and IP addresses",
-    version = env!("CARGO_PKG_VERSION"),
-    author = "HuRuilizhen",
-    help_template = r#"
-{about}
+    name = env!("CARGO_PKG_NAME"),
+    author,
+    version,
+    about,
+    help_template = r#"{about}
 
 Version: {version}
 Author: {author}
@@ -70,6 +79,9 @@ pub struct Args {
 
     #[arg(long, help = "Try ping target host before starting port scan")]
     ping: bool,
+
+    #[arg(long, default_value = "connect", help = "Mode of scanning")]
+    mode: ScanMode,
 }
 
 fn expand_ports_spec(specs: &Vec<String>) -> Result<Vec<u16>, String> {
@@ -132,6 +144,7 @@ pub async fn parse() -> (Vec<Upshot>, DisplayConfig) {
     let upshots = scanner::scan_ports(AddrConfig {
         target: args.target.clone(),
         ports: ports,
+        mode: args.mode,
         timeout: args.timeout,
         concurrency: args.concurrency,
     })

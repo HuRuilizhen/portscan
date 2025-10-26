@@ -6,11 +6,13 @@
 use crate::config::{AddrConfig, ScanConfig};
 use crate::upshot::{Status, Upshot};
 use colored::Colorize;
-use pinger::{PingOptions, PingResult, ping};
-use std::net::{TcpStream, ToSocketAddrs};
+use pinger::{ping, PingOptions, PingResult};
+use std::net::{SocketAddr, TcpStream, ToSocketAddrs};
 use std::sync::Arc;
 use std::time::Duration;
 use tokio::sync::Semaphore;
+
+mod syn;
 
 pub fn ping_target(target: &String, timeout: u64) -> bool {
     let options = PingOptions::new(target, Duration::from_millis(timeout), None);
@@ -22,6 +24,17 @@ pub fn ping_target(target: &String, timeout: u64) -> bool {
         }
     }
     false
+}
+
+fn connect_target(addr: SocketAddr, timeout: u64) -> Status {
+    match TcpStream::connect_timeout(&addr, Duration::from_millis(timeout)) {
+        Ok(_) => Status::OPEN,
+        Err(_) => Status::CLOSE,
+    }
+}
+
+fn syn_target(_addr: SocketAddr, _timeout: u64) -> Status {
+    todo!()
 }
 
 type ConcurrencyLimit = Arc<Semaphore>;
@@ -49,12 +62,23 @@ pub async fn scan_port(scan_config: ScanConfig, limit: ConcurrencyLimit) -> Vec<
     for addr in addrs {
         let status: Status;
 
-        match TcpStream::connect_timeout(&addr, Duration::from_millis(scan_config.timeout)) {
-            Ok(_) => {
-                status = Status::OPEN;
+        match scan_config.mode {
+            crate::cli::ScanMode::Connect => {
+                status = connect_target(addr, scan_config.timeout);
             }
-            Err(_) => {
-                status = Status::CLOSE;
+            crate::cli::ScanMode::Syn => {
+                #[cfg(target_family = "unix")]
+                {
+                    status = syn_target(addr, scan_config.timeout);
+                }
+                #[cfg(not(target_family = "unix"))]
+                {
+                    eprintln!(
+                        "{}: unsupported scan mode on this platform",
+                        "Error".red().bold()
+                    );
+                    status = connect_target(addr, scan_config.timeout);
+                }
             }
         }
 
@@ -85,6 +109,7 @@ pub async fn scan_ports(addr_config: AddrConfig) -> Vec<Upshot> {
                 ScanConfig {
                     target: target,
                     port: port,
+                    mode: addr_config.mode,
                     timeout: addr_config.timeout,
                 },
                 limit,
